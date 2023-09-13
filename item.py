@@ -14,7 +14,7 @@ class Item:
 
     def __init__(self, delimiter = '||'):
         self.delimiter = delimiter
-        self._attributes = {}
+        self._attributes = { 'dc.title': []}
         self.files = ""
 
     """
@@ -29,6 +29,8 @@ class Item:
     def setAttribute(self, attribute, value):
         if attribute == "files":
             self.files = value
+        elif attribute == "dc.title":
+            self._attributes['dc.title'].append(value)
         else:
             self._attributes[attribute] = value
 
@@ -72,24 +74,51 @@ class Item:
     Returns an XML represenatation of the item.
     """
     def toXML(self):
-        output = ""
-        output += "<dublin_core>" + os.linesep
+        dc = ""
+        dc += "<dublin_core>" + os.linesep
+
+        dcterms = ""
+        dcterms += "<dublin_core schema=\"dcterms\">" + os.linesep
+
+        local = ""
+        local += "<dublin_core schema=\"local\">" + os.linesep
+
         for index, value in self.getAttributes().items():
+            schema = index.split('.')[0]
+
             tag_open = self.getOpenAttributeTag(index)
             tag_close = "</dcvalue>" + os.linesep
 
-            values = value.split(self.delimiter)
+            if index == "dc.title":
+                values = value
+            else:
+                values = value.split(self.delimiter)
 
             for val in values:
                 if not val:
                     continue
 
-                output += tag_open
-                output += html.escape(val.strip(), quote=True)
-                output += tag_close
-        output += "</dublin_core>" + os.linesep
+                match schema:
+                    case "dcterms":
+                        dcterms += tag_open
+                        dcterms += html.escape(val.strip(), quote=True)
+                        dcterms += tag_close
 
-        return output
+                    case "local":
+                        local += tag_open
+                        local += html.escape(val.strip(), quote=True)
+                        local += tag_close
+
+                    case _:
+                        dc += tag_open
+                        dc += html.escape(val.strip(), quote=True)
+                        dc += tag_close
+
+        dc += "</dublin_core>" + os.linesep
+        dcterms += "</dublin_core>" + os.linesep
+        local += "</dublin_core>" + os.linesep
+
+        return dc, dcterms, local
 
     """
     Get the opening XML tag for a metadata attribute.

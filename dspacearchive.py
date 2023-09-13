@@ -104,8 +104,16 @@ class DspaceArchive:
             copy(os.path.join(self.input_base_path, file_name), item_path)
 
     def writeMetadata(self, item, item_path):
-        xml = item.toXML()
+        dc, dcterms, local = item.toXML()
 
         metadata_file = open(os.path.join(item_path, 'dublin_core.xml'), "w")
-        metadata_file.write(xml)
+        metadata_file.write(dc)
+        metadata_file.close()
+
+        metadata_file = open(os.path.join(item_path, 'metadata_dcterms.xml'), "w")
+        metadata_file.write(dcterms)
+        metadata_file.close()
+
+        metadata_file = open(os.path.join(item_path, 'metadata_local.xml'), "w")
+        metadata_file.write(local)
         metadata_file.close()
